@@ -199,20 +199,17 @@ with st.sidebar:
     st.subheader("Dashboard Proyek")
     
     st.html("""
-        <div class="sidebar-title">Nama Pengembang</div>
+        <div class="sidebar-title">Nama Developer</div>
         <div class="sidebar-value">Sanly</div>
             
-        <div class="sidebar-title">NIM / Student ID</div>
+        <div class="sidebar-title">NIM</div>
         <div class="sidebar-value">2702271474</div>
-            
-        <div class="sidebar-title">Sistem Informasi</div>
-        <div class="sidebar-value">Proyek Akhir Text Mining</div>
             
         <div class="sidebar-title">Arsitektur Model</div>
         <div class="sidebar-value">Logistic Reg. & LSTM</div>
     """)
     st.divider()
-    st.caption("Deep Learning System - 2026")
+    st.caption("Text Mining Project - 2026")
 
 
 # =================================
