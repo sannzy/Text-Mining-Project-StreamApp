@@ -11,57 +11,41 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & PREMIUM DARK THEME
+# PAGE CONFIG & PROFESSIONAL THEME
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica", 
     layout="centered"
 )
 
-# Kustomisasi Full Dark Mode secara aman tanpa merusak teks aplikasi
+# Kustomisasi UI: Menghilangkan highlight teks & mengunci warna komponen
 st.html("""
     <style>
-    /* 1. MENGUNCI LATAR BELAKANG UTAMA MENJADI HITAM / GELAP */
+
     .stApp {
-        background-color: #0F172A !important;
+        background-color: #F8FAFC !important;
     }
     
-    /* 2. MEMAKSA SEMUA TEKS UTAMA MENJADI PUTIH TERANG AGAR KONTRAS */
-    .stApp p, .stApp label, .stApp span, div[data-testid="stWidgetLabel"] p {
-        color: #F8FAFC !important;
-    }
-    
-    /* Judul Utama Tetap Biru Terang Elegan */
-    h2 {
-        color: #38BDF8 !important;
-        font-weight: 700 !important;
-    }
-    
-    /* 3. MENGHILANGKAN STABILO BIRU (HIGHLIGHT BACKGROUND) PADA PILIHAN RADIO BUTTON */
     div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p span,
-    div[data-testid="stRadio"] div[class*="st-"] {
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] label span {
         background-color: transparent !important;
         background: transparent !important;
         box-shadow: none !important;
     }
     
-    /* Mencegah highlight bawaan browser saat komponen di-klik */
-    div[data-testid="stRadio"] label, div[data-testid="stRadio"] label * {
-        background-color: transparent !important;
-        background: transparent !important;
+    div[data-testid="stRadio"] * {
         -webkit-tap-highlight-color: transparent !important;
     }
     
-    /* 4. CUSTOM BULLET RADIO BUTTON (BIRU MURNI) */
     div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
-        border-color: #38BDF8 !important;
+        border-color: #1E40AF !important;
     }
     div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"]:checked + div div {
-        background-color: #38BDF8 !important;
-        background-image: radial-gradient(circle, #38BDF8 0%, #38BDF8 40%, transparent 50%) !important;
+        background-color: #1E40AF !important;
+        background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
     }
     
-    /* 5. CUSTOM TOMBOL PROSES ANALISIS (BIRU MODERN & PENUH) */
     div.stButton > button {
         width: 100% !important;
         background-color: #1E40AF !important;
@@ -71,22 +55,20 @@ st.html("""
         font-size: 1rem !important;
         font-weight: 600 !important;
         border: none !important;
-        box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.4) !important;
+        box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2) !important;
         transition: all 0.2s ease-in-out !important;
     }
     div.stButton > button:hover {
         background-color: #1D4ED8 !important;
-        box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.5) !important;
-        border: none !important;
         color: white !important;
+        border: none !important;
     }
     
-    /* 6. SIDEBAR STYLING - MENYESUAIKAN TEMA */
     section[data-testid="stSidebar"] {
-        background-color: #020617 !important;
+        background-color: #0F172A !important;
     }
     section[data-testid="stSidebar"] .sidebar-title {
-        color: #64748B !important;
+        color: #94A3B8 !important;
         font-size: 0.75rem !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
@@ -94,13 +76,12 @@ st.html("""
         margin-top: 15px !important;
     }
     section[data-testid="stSidebar"] .sidebar-value {
-        color: #F1F5F9 !important;
+        color: #F8FAFC !important;
         font-size: 0.95rem !important;
         font-weight: 600 !important;
         margin-bottom: 12px !important;
     }
     
-    /* Jaga jarak atas */
     .block-container {
         padding-top: 3rem;
     }
@@ -262,25 +243,24 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Desain Box Hasil Kontras dalam Mode Gelap
+                # Kotak hasil analisis
                 if label == "Positif":
                     st.html(f"""
-                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #38BDF8; background-color: #1E293B;">
-                            <p style="margin:0; font-size: 0.85rem; color: #38BDF8 !important;">PREDIKSI SISTEM</p>
-                            <p style="color: #0EA5E9 !important; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN POSITIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #E2E8F0 !important;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
+                            <p style="margin:0; font-size: 0.85rem; color: #0369A1;">PREDIKSI SISTEM</p>
+                            <p style="color: #1E40AF; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN POSITIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #334155;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
                 else:
                     st.html(f"""
-                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #22D3EE; background-color: #1E293B;">
-                            <p style="margin:0; font-size: 0.85rem; color: #22D3EE !important;">PREDIKSI SISTEM</p>
-                            <p style="color: #06B6D4 !important; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN NEGATIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #E2E8F0 !important;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #06B6D4; background-color: #ECFEFF;">
+                            <p style="margin:0; font-size: 0.85rem; color: #0891B2;">PREDIKSI SISTEM</p>
+                            <p style="color: #0E7490; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN NEGATIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #334155;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
 
-                # Indikator Nilai Kepercayaan
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.metric(label="Tingkat Keyakinan", value=f"{conf * 100:.1f}%")
