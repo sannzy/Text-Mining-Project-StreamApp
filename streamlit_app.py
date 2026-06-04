@@ -111,26 +111,87 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) secara aman lintas versi Keras."""
+    """Memuat model Deep Learning (LSTM) secara aman dengan merakit ulang arsitektur
+
+    dan menyuntikkan bobot murni untuk menghindari bug deserialization Keras.
+    """
     import pickle
-    from tensorflow.keras.models import load_model
+    import h5py
     
     try:
-        # Kembalikan ke file asli milikmu: dl_model.h5
         model_path = os.path.join(MODEL_DIR, "dl_model.h5")
         
-        # compile=False digunakan agar Keras tidak rewel mencari konfigurasi optimizer versi baru/lama
-        model = load_model(model_path, compile=False)
-
         with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
             tok = pickle.load(f)
         with open(os.path.join(MODEL_DIR, "config.pkl"), "rb") as f:
             cfg = pickle.load(f)
             
+        max_len = int(cfg["MAX_LEN"])
+        vocab_size = len(tok.word_index) + 1  # Menghitung ukuran kamus kata
+        
+        # 1. Bangun struktur layer tiruan secara manual yang kompatibel di semua versi Keras
+        model = tf.keras.Sequential([
+            tf.keras.layers.Input(shape=(max_len,)),
+            tf.keras.layers.Embedding(input_dim=5000, output_dim=64), # Mengunci MAX_WORDS=5000 & output=64 sesuai train.py
+            tf.keras.layers.LSTM(64),
+            tf.keras.layers.Dense(32, activation="relu"),
+            tf.keras.layers.Dropout(0.3),
+            tf.keras.layers.Dense(1, activation="sigmoid")
+        ])
+        
+        # 2. Ambil array bobot murni dari file .h5 kamu dan pasang ke struktur di atas
+        with h5py.File(model_path, 'r') as f:
+            # Mengambil daftar bobot berurutan dari layer-layer bermuatan di dalam file .h5 kamu
+            weight_layers = [g for g in f['model_weights'].values()]
+            
+            # Pasang bobot ke layer Sequential kita (Embedding -> Index 1, LSTM -> Index 2, dst)
+            # Layer Input tidak memiliki bobot, Dropout tidak memiliki bobot.
+            model.layers[0].set_weights([f['model_weights']['embedding']['embedding/embeddings:0'][()]])
+            
+            # Mengambil bobot LSTM
+            lstm_w = [
+                f['model_weights']['lstm']['lstm/lstm_cell/kernel:0'][()],
+                f['model_weights']['lstm']['lstm/lstm_cell/recurrent_kernel:0'][()],
+                f['model_weights']['lstm']['lstm/lstm_cell/bias:0'][()]
+            ]
+            model.layers[1].set_weights(lstm_w)
+            
+            # Mengambil bobot Dense Pertama
+            dense_w = [
+                f['model_weights']['dense']['dense/kernel:0'][()],
+                f['model_weights']['dense']['dense/bias:0'][()]
+            ]
+            model.layers[2].set_weights(dense_w)
+            
+            # Mengambil bobot Dense Kedua (Output)
+            dense_1_w = [
+                f['model_weights']['dense_1']['dense_1/kernel:0'][()],
+                f['model_weights']['dense_1']['dense_1/bias:0'][()]
+            ]
+            model.layers[4].set_weights(dense_1_w)
+            
         return model, tok, cfg, None
     except Exception as e:
-        return None, None, None, str(e)
-        
+        # Jika ada ketidakcocokan nama internal layer di komputer lokalmu, gunakan fallback ini
+        try:
+            tf.keras.backend.clear_session()
+            # Alternatif otomatis jika penamaan file .h5 menggunakan index sequential standar
+            with h5py.File(model_path, 'r') as f:
+                layers_keys = list(f['model_weights'].keys())
+                model.layers[0].set_weights([f['model_weights'][layers_keys[0]][list(f['model_weights'][layers_keys[0]].keys())[0]][()]])
+                
+                lstm_keys = list(f['model_weights'][layers_keys[1]].keys())
+                model.layers[1].set_weights([f['model_weights'][layers_keys[1]][k][()] for k in sorted(lstm_keys)])
+                
+                dense_keys = list(f['model_weights'][layers_keys[2]].keys())
+                model.layers[2].set_weights([f['model_weights'][layers_keys[2]][k][()] for k in sorted(dense_keys)])
+                
+                dense1_keys = list(f['model_weights'][layers_keys[3]].keys())
+                model.layers[4].set_weights([f['model_weights'][layers_keys[3]][k][()] for k in sorted(dense1_keys)])
+            return model, tok, cfg, None
+        except Exception as fallback_error:
+            return None, None, None, f"Gagal memuat arsitektur matriks: {str(e)} | Fallback: {str(fallback_error)}"
+                
 # =================================
 # PREDICTION FUNCTIONS
 # =================================
