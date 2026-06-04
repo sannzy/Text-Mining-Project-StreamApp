@@ -11,23 +11,23 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & FORCE LIGHT THEME
+# PAGE CONFIG & TARGETED THEME
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica - Integrated System", 
     layout="centered"
 )
 
-# Injeksi CSS untuk memaksa warna Light Theme, teks gelap, tombol biru, dan bullet biru
+# Injeksi CSS spesifik: memisahkan styling Main Content dan Sidebar
 st.html("""
     <style>
-    /* Mengunci background utama menjadi terang */
-    .stApp {
+    /* 1. MAIN CONTENT AREA SPECIFIC */
+    .stMain, .stApp {
         background-color: #F8FAFC !important;
     }
     
-    /* Memaksa warna semua teks input dan label menjadi gelap agar kontras */
-    .stApp p, .stApp label, .stApp span, div[data-testid="stWidgetLabel"] p {
+    /* Memaksa warna teks di area konten utama saja menjadi gelap */
+    .stMain p, .stMain label, .stMain span, div[data-testid="stWidgetLabel"] p {
         color: #0F172A !important;
         font-weight: 500 !important;
     }
@@ -50,7 +50,21 @@ st.html("""
         color: white !important;
     }
     
-    /* Mengubah warna bullet radio button yang aktif menjadi biru */
+    /* 2. SIDEBAR AREA SPECIFIC (Memperbaiki teks yang hilang) */
+    section[data-testid="stSidebar"] {
+        background-color: #1E293B !important;
+    }
+    
+    /* Memaksa teks di dalam sidebar menjadi putih terang agar kontras */
+    section[data-testid="stSidebar"] h3, 
+    section[data-testid="stSidebar"] h4, 
+    section[data-testid="stSidebar"] p, 
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] div {
+        color: #F8FAFC !important;
+    }
+    
+    /* 3. RADIO BUTTON (BULLET) BLUE THEME */
     div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
         border-color: #1E40AF !important;
     }
@@ -59,7 +73,7 @@ st.html("""
         background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
     }
     
-    /* Memperbaiki padding atas */
+    /* Padding Atas */
     .block-container {
         padding-top: 2rem;
     }
@@ -67,7 +81,7 @@ st.html("""
 """)
 
 # =================================
-# LOAD ASSETS & PATCHES (Fixed Keras Attribute Error)
+# LOAD ASSETS & PATCHES 
 # =================================
 @st.cache_resource
 def load_ml():
@@ -79,14 +93,13 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) dengan perbaikan attribute model_from_config."""
+    """Memuat model Deep Learning (LSTM) dengan perbaikan arsitektur."""
     import h5py
     import json
     
     try:
         model_path = os.path.join(MODEL_DIR, "dl_model.h5")
         
-        # --- GLOBAL PATCH UNTUK KORUP CONFIG KERAS 3 ---
         def clean_quantization_config(config):
             if isinstance(config, dict):
                 config.pop('quantization_config', None)
@@ -107,8 +120,6 @@ def load_dl():
                 
             model_config = json.loads(model_config_raw)
             cleaned_config = clean_quantization_config(model_config)
-            
-            # PERBAIKAN DI SINI: Menggunakan tf.keras.models.model_from_config secara langsung
             model = tf.keras.models.model_from_config(cleaned_config)
             
             for layer in model.layers:
@@ -150,7 +161,6 @@ def predict_dl(text):
         
     cleaned = preprocess(text)
     seq = tok.texts_to_sequences([cleaned])
-    
     padded = pad_sequences(
         seq,
         maxlen=int(cfg["MAX_LEN"]), 
@@ -165,13 +175,16 @@ def predict_dl(text):
 
 
 # =================================
-# SIDEBAR (Identitas Terang Kontras)
+# SIDEBAR
 # =================================
 with st.sidebar:
-    st.subheader("Informasi Proyek")
-    st.text("Pengembang:\nSanly - 2702271474")
-    st.text("Sistem Informasi:\nProyek Akhir Text Mining")
-    st.text("Model: ML & Deep Learning LSTM")
+    st.markdown("### Informasi Proyek")
+    st.markdown("**Pengembang:**")
+    st.markdown("Sanly - 2702271474")
+    st.markdown("**Sistem Informasi:**")
+    st.markdown("Proyek Akhir Text Mining")
+    st.markdown("**Model:**")
+    st.markdown("ML & Deep Learning LSTM")
     st.divider()
     st.caption("Deep Learning Project - 2026")
 
@@ -212,7 +225,6 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Desain kotak hasil serba biru murni (Bebas dari warna merah)
                 if label == "Positif":
                     st.html(f"""
                         <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
@@ -230,7 +242,6 @@ if st.button("Proses Analisis", type="primary"):
                         </div>
                     """)
 
-                # Menampilkan Metrik Komponen
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.metric(label="Tingkat Keyakinan", value=f"{conf * 100:.1f}%")
