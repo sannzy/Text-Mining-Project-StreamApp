@@ -8,63 +8,21 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & STYLING (Aman dari Bug Streamlit)
+# PAGE CONFIG
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica - Integrated System", 
     layout="centered"
 )
 
-# Menggunakan komponen HTML murni lewat st.components.v1 untuk menyuntikkan gaya tanpa memicu bug st.markdown
-import streamlit.components.v1 as components
-
-components.html("""
+# Menghilangkan padding atas bawaan Streamlit agar layout lebih rapi
+st.html("""
     <style>
-    /* Menargetkan elemen induk Streamlit secara paksa lewat inject script */
-    parent.document.body.style.backgroundColor = "#F0F4F8";
-    
-    .stApp {
-        background-color: #F0F4F8 !important;
+    .block-container {
+        padding-top: 2rem;
     }
     </style>
-""", height=0)
-
-# CSS Styling yang kita bungkus ke fungsi agar tidak dieksekusi langsung di top-level script
-def get_custom_styles():
-    return """
-    <style>
-    .stButton>button {
-        width: 100%;
-        background-color: #1E40AF;
-        color: white;
-        border-radius: 4px;
-        border: none;
-        padding: 0.6rem;
-        font-weight: 600;
-        transition: 0.3s;
-    }
-    .stButton>button:hover {
-        background-color: #1E3A8A;
-        color: white;
-    }
-    .result-box {
-        padding: 20px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        border-left: 5px solid #1E40AF;
-        background-color: #FFFFFF;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .positive-text { color: #1E40AF; font-weight: bold; font-size: 1.2rem; }
-    .negative-text { color: #B91C1C; font-weight: bold; font-size: 1.2rem; }
-    .footer {
-        position: fixed; left: 0; bottom: 0; width: 100%;
-        background-color: #FFFFFF; color: #475569; text-align: center;
-        padding: 10px; font-size: 12px; border-top: 1px solid #E2E8F0;
-    }
-    </style>
-    """
-
+""")
 
 # =================================
 # LOAD ASSETS & PATCHES (Anti Bug Keras 3)
@@ -161,13 +119,13 @@ def predict_dl(text):
 
 
 # =================================
-# SIDEBAR (Identitas Kamu)
+# SIDEBAR (Identitas Tanpa Markdown HTML)
 # =================================
 with st.sidebar:
-    st.write("### Informasi Proyek")
-    st.write("**Pengembang:** Sanly - 2702271474")
-    st.write("**Sistem Informasi:** Proyek Akhir Text Mining")
-    st.write("Dual Model Option System")
+    st.subheader("Informasi Proyek")
+    st.text("Pengembang:\nSanly - 2702271474")
+    st.text("Sistem Informasi:\nProyek Akhir Text Mining")
+    st.text("Model: ML & Deep Learning LSTM")
     st.divider()
     st.caption("Deep Learning Project - 2026")
 
@@ -175,11 +133,9 @@ with st.sidebar:
 # =================================
 # MAIN CONTENT AREA
 # =================================
-# Menyuntikkan style tombol dan box secara aman di area konten
-st.html(get_custom_styles())
-
-st.markdown("<h2 style='text-align: center; color: #1E40AF;'>Analisis Sentimen Teks</h2>", unsafe_allowed_html=True)
-st.markdown("<p style='text-align: center; color: #475569;'>Sistem klasifikasi teks otomatis berbasis Machine Learning dan Deep Learning.</p>", unsafe_allowed_html=True)
+# Menggunakan fungsi bawaan murni (Aman dari bug st.markdown HTML)
+st.header("Analisis Sentimen Teks", divider="blue")
+st.caption("Sistem klasifikasi teks otomatis berbasis Machine Learning dan Deep Learning LSTM.")
 st.write("")
 
 model_choice = st.radio(
@@ -194,7 +150,7 @@ text_input = st.text_area(
     placeholder="Tulis ulasan Anda di sini tanpa simbol khusus..."
 )
 
-if st.button("Proses Analisis"):
+if st.button("Proses Analisis", type="primary"):
     if not text_input.strip():
         st.info("Pesan: Teks tidak boleh kosong. Silakan masukkan teks terlebih dahulu.")
     else:
@@ -209,33 +165,38 @@ if st.button("Proses Analisis"):
                 cleaned_text = preprocess(text_input)
                 
                 st.write("---")
-                st.markdown("#### Hasil Klasifikasi")
+                st.subheader("Hasil Klasifikasi")
                 
+                # Menggunakan st.html khusus untuk cetak kotak hasil agar terisolasi dari st.metric
                 if label == "Positif":
-                    label_display = "SENTIMEN POSITIF"
-                    css_class = "positive-text"
+                    st.html(f"""
+                        <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
+                            <p style="margin:0; font-size: 0.9rem; color: #0369A1;">Prediksi:</p>
+                            <p style="color: #1E40AF; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN POSITIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #0369A1;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        </div>
+                    """)
                 else:
-                    label_display = "SENTIMEN NEGATIF"
-                    css_class = "negative-text"
-                
-                st.markdown(f"""
-                    <div class="result-box">
-                        <p style="margin:0; font-size: 0.9rem; color: #64748B;">Prediksi:</p>
-                        <p class="{css_class}">{label_display}</p>
-                        <p style="margin:0; font-size: 0.9rem; color: #64748B;">Teks Bersih: <i>"{cleaned_text}"</i></p>
-                    </div>
-                """, unsafe_allowed_html=True)
+                    st.html(f"""
+                        <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #B91C1C; background-color: #FEE2E2;">
+                            <p style="margin:0; font-size: 0.9rem; color: #991B1B;">Prediksi:</p>
+                            <p style="color: #B91C1C; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN NEGATIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #991B1B;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        </div>
+                    """)
 
+                # Menampilkan Metrik Komponen
                 col1, col2 = st.columns([1, 2])
                 with col1:
-                    st.metric(label="Tingkat Keyakinan (Confidence)", value=f"{conf * 100:.1f}%")
+                    st.metric(label="Tingkat Keyakinan", value=f"{conf * 100:.1f}%")
                 with col2:
-                    st.caption(f"Probabilitas ke arah Positif: P(positif) = {proba:.4f}")
+                    st.caption(f"Probabilitas ke arah Positif: {proba:.4f}")
                     st.progress(proba)
                     
             except Exception as e:
                 st.error("Terjadi kesalahan internal pada pemrosesan model:")
                 st.code(str(e), language="text")
 
-# Footer
-st.markdown('<div class="footer">Created by Sanly - 2702271474</div>', unsafe_allowed_html=True)
+# Footer menggunakan teks murni
+st.divider()
+st.caption("Created by Sanly - 2702271474")
