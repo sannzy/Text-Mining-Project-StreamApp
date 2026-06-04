@@ -11,22 +11,42 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & CLEAN BLUE THEME
+# PAGE CONFIG & PREMIUM DARK THEME
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica", 
     layout="centered"
 )
 
-# Kustomisasi UI minimalis: Mengubah tombol & bullet tanpa merusak warna teks aplikasi
+# Kustomisasi Full Dark Mode secara aman tanpa merusak teks aplikasi
 st.html("""
     <style>
-    /* Mengunci latar belakang aplikasi tetap terang */
     .stApp {
-        background-color: #F8FAFC !important;
+        background-color: #0F172A !important;
+    }
+        
+    .stApp p, .stApp label, .stApp span, div[data-testid="stWidgetLabel"] p {
+        color: #F8FAFC !important;
     }
     
-    /* CUSTOM TOMBOL PROSES ANALISIS (BIRU MODERN & PENUH) */
+    h2 {
+        color: #38BDF8 !important;
+        font-weight: 700 !important;
+    }
+    
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p span {
+        background-color: transparent !important;
+        color: #F8FAFC !important;
+    }
+    
+    div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
+        border-color: #38BDF8 !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"]:checked + div div {
+        background-color: #38BDF8 !important;
+        background-image: radial-gradient(circle, #38BDF8 0%, #38BDF8 40%, transparent 50%) !important;
+    }
+    
     div.stButton > button {
         width: 100% !important;
         background-color: #1E40AF !important;
@@ -36,31 +56,21 @@ st.html("""
         font-size: 1rem !important;
         font-weight: 600 !important;
         border: none !important;
-        box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2) !important;
+        box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.4) !important;
         transition: all 0.2s ease-in-out !important;
     }
     div.stButton > button:hover {
         background-color: #1D4ED8 !important;
-        box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3) !important;
+        box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.5) !important;
         border: none !important;
         color: white !important;
     }
     
-    /* SUNTIKAN WARNA BIRU UNTUK BULLET RADIO BUTTON */
-    div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
-        border-color: #1E40AF !important;
-    }
-    div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"]:checked + div div {
-        background-color: #1E40AF !important;
-        background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
-    }
-    
-    /* SIDEBAR STYLING - RAPI & KONTRAS */
     section[data-testid="stSidebar"] {
-        background-color: #0F172A !important;
+        background-color: #020617 !important;
     }
     section[data-testid="stSidebar"] .sidebar-title {
-        color: #94A3B8 !important;
+        color: #64748B !important;
         font-size: 0.75rem !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
@@ -68,13 +78,12 @@ st.html("""
         margin-top: 15px !important;
     }
     section[data-testid="stSidebar"] .sidebar-value {
-        color: #F8FAFC !important;
+        color: #F1F5F9 !important;
         font-size: 0.95rem !important;
         font-weight: 600 !important;
         margin-bottom: 12px !important;
     }
     
-    /* Jaga jarak atas */
     .block-container {
         padding-top: 3rem;
     }
@@ -236,21 +245,21 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Desain Box Hasil Minimalis Serba Biru
+                # Desain Box Hasil Kontras dalam Mode Gelap
                 if label == "Positif":
                     st.html(f"""
-                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
-                            <p style="margin:0; font-size: 0.85rem; color: #0369A1;">PREDIKSI SISTEM</p>
-                            <p style="color: #1E40AF; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN POSITIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #334155;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #38BDF8; background-color: #1E293B;">
+                            <p style="margin:0; font-size: 0.85rem; color: #38BDF8 !important;">PREDIKSI SISTEM</p>
+                            <p style="color: #0EA5E9 !important; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN POSITIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #E2E8F0 !important;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
                 else:
                     st.html(f"""
-                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #06B6D4; background-color: #ECFEFF;">
-                            <p style="margin:0; font-size: 0.85rem; color: #0891B2;">PREDIKSI SISTEM</p>
-                            <p style="color: #0E7490; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN NEGATIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #334155;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #22D3EE; background-color: #1E293B;">
+                            <p style="margin:0; font-size: 0.85rem; color: #22D3EE !important;">PREDIKSI SISTEM</p>
+                            <p style="color: #06B6D4 !important; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN NEGATIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #E2E8F0 !important;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
 
