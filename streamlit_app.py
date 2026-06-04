@@ -11,60 +11,31 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & TARGETED THEME
+# PAGE CONFIG & PROFESSIONAL BLUE THEME
 # =================================
 st.set_page_config(
-    page_title="SentimenAnalytica - Integrated System", 
+    page_title="SentimenAnalytica", 
     layout="centered"
 )
 
-# Injeksi CSS spesifik: memisahkan styling Main Content dan Sidebar
+# Kustomisasi UI agar bersih, minimalis, dan serba biru murni
 st.html("""
     <style>
-    /* 1. MAIN CONTENT AREA SPECIFIC */
-    .stMain, .stApp {
+    /* Mengatur latar belakang aplikasi tetap bersih */
+    .stApp {
         background-color: #F8FAFC !important;
     }
     
-    /* Memaksa warna teks di area konten utama saja menjadi gelap */
-    .stMain p, .stMain label, .stMain span, div[data-testid="stWidgetLabel"] p {
-        color: #0F172A !important;
-        font-weight: 500 !important;
+    /* MENGHILANGKAN HIGHLIGHT SELEKSI PADA RADIO BUTTON */
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p span {
+        background-color: transparent !important;
+        color: #1E293B !important;
+    }
+    ::selection {
+        background: transparent !important;
     }
     
-    /* Judul Utama */
-    h2 {
-        color: #1E40AF !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Tombol Utama Paksa Warna Biru */
-    button[data-testid="stBaseButton-primary"] {
-        background-color: #1E40AF !important;
-        color: white !important;
-        border: none !important;
-        width: 100% !important;
-    }
-    button[data-testid="stBaseButton-primary"]:hover {
-        background-color: #1E3A8A !important;
-        color: white !important;
-    }
-    
-    /* 2. SIDEBAR AREA SPECIFIC (Memperbaiki teks yang hilang) */
-    section[data-testid="stSidebar"] {
-        background-color: #1E293B !important;
-    }
-    
-    /* Memaksa teks di dalam sidebar menjadi putih terang agar kontras */
-    section[data-testid="stSidebar"] h3, 
-    section[data-testid="stSidebar"] h4, 
-    section[data-testid="stSidebar"] p, 
-    section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] div {
-        color: #F8FAFC !important;
-    }
-    
-    /* 3. RADIO BUTTON (BULLET) BLUE THEME */
+    /* CUSTOM BULLET RADIO BUTTON (BIRU MURNI) */
     div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
         border-color: #1E40AF !important;
     }
@@ -73,15 +44,58 @@ st.html("""
         background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
     }
     
-    /* Padding Atas */
+    /* CUSTOM TOMBOL PROSES ANALISIS (BIRU MODERN & PENUH) */
+    div.stButton > button {
+        width: 100% !important;
+        background-color: #1E40AF !important;
+        color: white !important;
+        border-radius: 6px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+        box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    div.stButton > button:hover {
+        background-color: #1D4ED8 !important;
+        box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3) !important;
+        border: none !important;
+        color: white !important;
+    }
+    div.stButton > button:active {
+        background-color: #1E3A8A !important;
+        border: none !important;
+    }
+    
+    /* SIDEBAR STYLING - RAPI & ELEGAN */
+    section[data-testid="stSidebar"] {
+        background-color: #0F172A !important;
+    }
+    section[data-testid="stSidebar"] .sidebar-title {
+        color: #94A3B8 !important;
+        font-size: 0.75rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        margin-bottom: 2px !important;
+        margin-top: 15px !important;
+    }
+    section[data-testid="stSidebar"] .sidebar-value {
+        color: #F8FAFC !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 12px !important;
+    }
+    
+    /* Layout kontainer utama */
     .block-container {
-        padding-top: 2rem;
+        padding-top: 3rem;
     }
     </style>
 """)
 
 # =================================
-# LOAD ASSETS & PATCHES 
+# LOAD ASSETS & PATCHES (Anti Bug Keras 3)
 # =================================
 @st.cache_resource
 def load_ml():
@@ -93,7 +107,7 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) dengan perbaikan arsitektur."""
+    """Memuat model Deep Learning (LSTM) dengan aman."""
     import h5py
     import json
     
@@ -175,25 +189,34 @@ def predict_dl(text):
 
 
 # =================================
-# SIDEBAR
+# SIDEBAR (Struktur Minimalis & Rapi)
 # =================================
 with st.sidebar:
-    st.markdown("### Informasi Proyek")
-    st.markdown("**Pengembang:**")
-    st.markdown("Sanly - 2702271474")
-    st.markdown("**Sistem Informasi:**")
-    st.markdown("Proyek Akhir Text Mining")
-    st.markdown("**Model:**")
-    st.markdown("ML & Deep Learning LSTM")
+    st.markdown("<h3 style='color: #F8FAFC; margin-bottom: 20px;'>Dashboard Proyek</h3>", unsafe_allowed_html=True)
+    
+    # Menggunakan kelas CSS kustom untuk memisahkan Label dan Nilai Data secara terstruktur
+    st.html("""
+        <div class="sidebar-title">Nama Pengembang</div>
+        <div class="sidebar-value">Sanly</div>
+            
+        <div class="sidebar-title">NIM / Student ID</div>
+        <div class="sidebar-value">2702271474</div>
+            
+        <div class="sidebar-title">Sistem Informasi</div>
+        <div class="sidebar-value">Proyek Akhir Text Mining</div>
+            
+        <div class="sidebar-title">Arsitektur Model</div>
+        <div class="sidebar-value">Logistic Reg. & LSTM</div>
+    """)
     st.divider()
-    st.caption("Deep Learning Project - 2026")
+    st.caption("Deep Learning System - 2026")
 
 
 # =================================
 # MAIN CONTENT AREA
 # =================================
 st.header("Analisis Sentimen Teks", divider="blue")
-st.caption("Sistem klasifikasi teks otomatis berbasis Machine Learning dan Deep Learning LSTM.")
+st.caption("Aplikasi penentu polaritas sentimen otomatis berbasis kecerdasan buatan.")
 st.write("")
 
 model_choice = st.radio(
@@ -204,15 +227,18 @@ model_choice = st.radio(
 
 text_input = st.text_area(
     "Masukkan teks ulasan yang ingin dianalisis:", 
-    height=140,
-    placeholder="Tulis ulasan Anda di sini tanpa simbol khusus..."
+    height=130,
+    placeholder="Tulis ulasan Anda di sini..."
 )
 
+st.write("")
+
+# Tombol "Proses Analisis" otomatis diubah ke Biru Elegan oleh CSS di atas
 if st.button("Proses Analisis", type="primary"):
     if not text_input.strip():
-        st.info("Pesan: Teks tidak boleh kosong. Silakan masukkan teks terlebih dahulu.")
+        st.info("Pesan: Teks input kosong. Silakan masukkan ulasan teks terlebih dahulu.")
     else:
-        with st.spinner("Menganalisis ulasan..."):
+        with st.spinner("Menghitung probabilitas..."):
             try:
                 if model_choice.startswith("Deep"):
                     label, proba = predict_dl(text_input)
@@ -225,34 +251,36 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
+                # Desain Box Hasil Minimalis Serba Biru murni
                 if label == "Positif":
                     st.html(f"""
-                        <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
-                            <p style="margin:0; font-size: 0.9rem; color: #0369A1 !important;">Prediksi:</p>
-                            <p style="color: #1E40AF !important; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN POSITIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #0369A1 !important;">Teks Bersih: <span style="color: #0F172A !important;"><i>"{cleaned_text}"</i></span></p>
+                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
+                            <p style="margin:0; font-size: 0.85rem; color: #0369A1;">PREDIKSI SISTEM</p>
+                            <p style="color: #1E40AF; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN POSITIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #334155;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
                 else:
                     st.html(f"""
-                        <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #06B6D4; background-color: #ECFEFF;">
-                            <p style="margin:0; font-size: 0.9rem; color: #0891B2 !important;">Prediksi:</p>
-                            <p style="color: #0E7490 !important; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN NEGATIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #0891B2 !important;">Teks Bersih: <span style="color: #0F172A !important;"><i>"{cleaned_text}"</i></span></p>
+                        <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #06B6D4; background-color: #ECFEFF;">
+                            <p style="margin:0; font-size: 0.85rem; color: #0891B2;">PREDIKSI SISTEM</p>
+                            <p style="color: #0E7490; font-weight: 700; font-size: 1.25rem; margin: 4px 0;">SENTIMEN NEGATIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #334155;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
 
+                # Indikator Nilai Kepercayaan (Confidence)
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.metric(label="Tingkat Keyakinan", value=f"{conf * 100:.1f}%")
                 with col2:
-                    st.caption(f"Probabilitas ke arah Positif: {proba:.4f}")
+                    st.caption(f"Probabilitas Sentimen Positif: {proba:.4f}")
                     st.progress(proba)
                     
             except Exception as e:
                 st.error("Terjadi kesalahan internal pada pemrosesan model:")
                 st.code(str(e), language="text")
 
-# Footer
+# Footer Minimalis
 st.divider()
 st.caption("Created by Sanly - 2702271474")
