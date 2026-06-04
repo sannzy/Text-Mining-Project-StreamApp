@@ -111,21 +111,25 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) secara aman menggunakan format universal .keras"""
+    """Memuat model Deep Learning (LSTM) secara aman lintas versi Keras."""
     import pickle
     from tensorflow.keras.models import load_model
     
     try:
-        # Menggunakan load_model langsung ke file format .keras (seperti kodingan temanmu)
-        model_path = os.path.join(MODEL_DIR, "sentiment_lstm.keras")
+        # Kembalikan ke file asli milikmu: dl_model.h5
+        model_path = os.path.join(MODEL_DIR, "dl_model.h5")
+        
+        # compile=False digunakan agar Keras tidak rewel mencari konfigurasi optimizer versi baru/lama
         model = load_model(model_path, compile=False)
 
         with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
             tok = pickle.load(f)
+        with open(os.path.join(MODEL_DIR, "config.pkl"), "rb") as f:
+            cfg = pickle.load(f)
             
-        return model, tok, None
+        return model, tok, cfg, None
     except Exception as e:
-        return None, None, str(e)
+        return None, None, None, str(e)
         
 # =================================
 # PREDICTION FUNCTIONS
@@ -139,17 +143,17 @@ def predict_ml(text):
 
 
 def predict_dl(text):
-    model, tok, error_msg = load_dl()
+    model, tok, cfg, error_msg = load_dl()
     if error_msg:
         raise RuntimeError(error_msg)
         
     cleaned = preprocess(text)
     seq = tok.texts_to_sequences([cleaned])
     
-    # Ambil nilai MAX_LEN aman langsung berupa angka integer (50 sesuai model temanmu)
+    # Mengambil nilai MAX_LEN secara aman dari config.pkl milikmu (bernilai 30)
     padded = pad_sequences(
         seq,
-        maxlen=50, 
+        maxlen=int(cfg["MAX_LEN"]), 
         padding="post", 
         truncating="post"
     )
