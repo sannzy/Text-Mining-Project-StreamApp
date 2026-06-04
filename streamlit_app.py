@@ -11,21 +11,46 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & CUSTOM BLUE THEME
+# PAGE CONFIG & FORCE LIGHT THEME
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica - Integrated System", 
     layout="centered"
 )
 
-# Kustomisasi CSS untuk mengubah warna border hasil dan tombol bullet menjadi Biru
+# Injeksi CSS untuk memaksa warna Light Theme, teks gelap, tombol biru, dan bullet biru
 st.html("""
     <style>
-    .block-container {
-        padding-top: 2rem;
+    /* Mengunci background utama menjadi terang */
+    .stApp {
+        background-color: #F8FAFC !important;
     }
     
-    /* Mengubah warna teks dan lingkaran radio button (bullet) yang aktif menjadi biru */
+    /* Memaksa warna semua teks input dan label menjadi gelap agar kontras */
+    .stApp p, .stApp label, .stApp span, div[data-testid="stWidgetLabel"] p {
+        color: #0F172A !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Judul Utama */
+    h2 {
+        color: #1E40AF !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Tombol Utama Paksa Warna Biru */
+    button[data-testid="stBaseButton-primary"] {
+        background-color: #1E40AF !important;
+        color: white !important;
+        border: none !important;
+        width: 100% !important;
+    }
+    button[data-testid="stBaseButton-primary"]:hover {
+        background-color: #1E3A8A !important;
+        color: white !important;
+    }
+    
+    /* Mengubah warna bullet radio button yang aktif menjadi biru */
     div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
         border-color: #1E40AF !important;
     }
@@ -33,14 +58,16 @@ st.html("""
         background-color: #1E40AF !important;
         background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
     }
-    div[data-testid="stRadio"] label p {
-        color: #1E293B !important;
+    
+    /* Memperbaiki padding atas */
+    .block-container {
+        padding-top: 2rem;
     }
     </style>
 """)
 
 # =================================
-# LOAD ASSETS & PATCHES (Anti Bug Keras 3)
+# LOAD ASSETS & PATCHES (Fixed Keras Attribute Error)
 # =================================
 @st.cache_resource
 def load_ml():
@@ -52,7 +79,7 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) dengan membersihkan semua bug Keras 3 secara global."""
+    """Memuat model Deep Learning (LSTM) dengan perbaikan attribute model_from_config."""
     import h5py
     import json
     
@@ -80,6 +107,8 @@ def load_dl():
                 
             model_config = json.loads(model_config_raw)
             cleaned_config = clean_quantization_config(model_config)
+            
+            # PERBAIKAN DI SINI: Menggunakan tf.keras.models.model_from_config secara langsung
             model = tf.keras.models.model_from_config(cleaned_config)
             
             for layer in model.layers:
@@ -115,7 +144,6 @@ def predict_ml(text):
 
 
 def predict_dl(text):
-    """Prediksi menggunakan model Deep Learning (LSTM) dengan perbaikan global import."""
     model, tok, cfg, error_msg = load_dl()
     if error_msg:
         raise RuntimeError(error_msg)
@@ -137,7 +165,7 @@ def predict_dl(text):
 
 
 # =================================
-# SIDEBAR (Identitas Tanpa HTML)
+# SIDEBAR (Identitas Terang Kontras)
 # =================================
 with st.sidebar:
     st.subheader("Informasi Proyek")
@@ -184,21 +212,21 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Desain kotak hasil baru: Positif menggunakan biru tua, Negatif menggunakan biru muda/cyan agar serba biru
+                # Desain kotak hasil serba biru murni (Bebas dari warna merah)
                 if label == "Positif":
                     st.html(f"""
                         <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
-                            <p style="margin:0; font-size: 0.9rem; color: #0369A1;">Prediksi:</p>
-                            <p style="color: #1E40AF; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN POSITIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #0369A1;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                            <p style="margin:0; font-size: 0.9rem; color: #0369A1 !important;">Prediksi:</p>
+                            <p style="color: #1E40AF !important; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN POSITIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #0369A1 !important;">Teks Bersih: <span style="color: #0F172A !important;"><i>"{cleaned_text}"</i></span></p>
                         </div>
                     """)
                 else:
                     st.html(f"""
                         <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #06B6D4; background-color: #ECFEFF;">
-                            <p style="margin:0; font-size: 0.9rem; color: #0891B2;">Prediksi:</p>
-                            <p style="color: #0E7490; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN NEGATIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #0891B2;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                            <p style="margin:0; font-size: 0.9rem; color: #0891B2 !important;">Prediksi:</p>
+                            <p style="color: #0E7490 !important; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN NEGATIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #0891B2 !important;">Teks Bersih: <span style="color: #0F172A !important;"><i>"{cleaned_text}"</i></span></p>
                         </div>
                     """)
 
