@@ -110,36 +110,14 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) secara aman dengan membypass rewelnya 
-
-    argumen InputLayer (batch_shape, optional, sparse) pada perbedaan versi Keras.
-    """
+    """Memuat model Deep Learning (LSTM) secara aman menggunakan format native .keras"""
     import pickle
     from tensorflow.keras.models import load_model
-    from tensorflow.keras.utils import custom_object_scope
     
     try:
-        model_path = os.path.join(MODEL_DIR, "dl_model.h5")
-        
-        # Membuat 'InputLayer' kustom sementara waktu saat loading
-        # Agar semua keyword argument lama yang bikin crash di Keras 3 dibuang otomatis
-        class SafeInputLayer(tf.keras.layers.Layer):
-            def __init__(self, *args, **kwargs):
-                kwargs.pop('batch_shape', None)
-                kwargs.pop('optional', None)
-                kwargs.pop('sparse', None)  # <-- Buang parameter sparse yang bikin error sekarang
-                super().__init__(*args, **kwargs)
-                
-            @classmethod
-            def from_config(cls, config):
-                config.pop('batch_shape', None)
-                config.pop('optional', None)
-                config.pop('sparse', None)  # <-- Buang juga di bagian konfigurasi serialisasinya
-                return cls(**config)
-
-        # Muat model di dalam scope custom object agar menggunakan filter buatan kita
-        with custom_object_scope({'InputLayer': SafeInputLayer}):
-            model = load_model(model_path, compile=False)
+        # Menembak langsung file format .keras baru milikmu
+        model_path = os.path.join(MODEL_DIR, "dl_model.keras")
+        model = load_model(model_path, compile=False)
 
         with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
             tok = pickle.load(f)
@@ -149,7 +127,7 @@ def load_dl():
         return model, tok, cfg, None
     except Exception as e:
         return None, None, None, str(e)
-                
+                    
 # =================================
 # PREDICTION FUNCTIONS
 # =================================
