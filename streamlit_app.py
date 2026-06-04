@@ -111,31 +111,21 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) secara aman lintas versi Keras 2 & 3
-
-    menggunakan legacy h5 format loader bawaan.
-    """
+    """Memuat model Deep Learning (LSTM) secara aman menggunakan format universal .keras"""
     import pickle
+    from tensorflow.keras.models import load_model
     
     try:
-        model_path = os.path.join(MODEL_DIR, "dl_model.h5")
-        
-        # Coba load menggunakan legacy loader bawaan Keras 3 secara langsung
-        try:
-            from keras.src.saving import legacy_h5_format
-            model = legacy_h5_format.load_model_from_hdf5(model_path, compile=False)
-        except (ImportError, ModuleNotFoundError):
-            # Jika gagal atau jalurnya berbeda, gunakan native load_model biasa (fallback)
-            model = tf.keras.models.load_model(model_path, compile=False)
+        # Menggunakan load_model langsung ke file format .keras (seperti kodingan temanmu)
+        model_path = os.path.join(MODEL_DIR, "sentiment_lstm.keras")
+        model = load_model(model_path, compile=False)
 
         with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
             tok = pickle.load(f)
-        with open(os.path.join(MODEL_DIR, "config.pkl"), "rb") as f:
-            cfg = pickle.load(f)
             
-        return model, tok, cfg, None
+        return model, tok, None
     except Exception as e:
-        return None, None, None, str(e)
+        return None, None, str(e)
         
 # =================================
 # PREDICTION FUNCTIONS
@@ -149,15 +139,17 @@ def predict_ml(text):
 
 
 def predict_dl(text):
-    model, tok, cfg, error_msg = load_dl()
+    model, tok, error_msg = load_dl()
     if error_msg:
         raise RuntimeError(error_msg)
         
     cleaned = preprocess(text)
     seq = tok.texts_to_sequences([cleaned])
+    
+    # Ambil nilai MAX_LEN aman langsung berupa angka integer (50 sesuai model temanmu)
     padded = pad_sequences(
         seq,
-        maxlen=int(cfg["MAX_LEN"]), 
+        maxlen=50, 
         padding="post", 
         truncating="post"
     )
@@ -166,7 +158,6 @@ def predict_dl(text):
     proba = float(raw_prediction[0][0])
     label = "Positif" if proba >= 0.5 else "Negatif"
     return label, proba
-
 
 # =================================
 # SIDEBAR
