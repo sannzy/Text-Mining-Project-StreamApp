@@ -112,7 +112,7 @@ def load_ml():
 def load_dl():
     """Memuat model Deep Learning (LSTM) secara aman dengan membypass rewelnya 
 
-    argumen InputLayer pada perbedaan versi Keras.
+    argumen InputLayer (batch_shape, optional, sparse) pada perbedaan versi Keras.
     """
     import pickle
     from tensorflow.keras.models import load_model
@@ -121,21 +121,23 @@ def load_dl():
     try:
         model_path = os.path.join(MODEL_DIR, "dl_model.h5")
         
-        # Membuat 'InputLayer' palsu/custom sementara waktu saat loading
-        # Agar config 'batch_shape' dan 'optional' diabaikan secara aman oleh serializer
+        # Membuat 'InputLayer' kustom sementara waktu saat loading
+        # Agar semua keyword argument lama yang bikin crash di Keras 3 dibuang otomatis
         class SafeInputLayer(tf.keras.layers.Layer):
             def __init__(self, *args, **kwargs):
-                # Buang parameter yang bikin crash lintas versi Keras
                 kwargs.pop('batch_shape', None)
                 kwargs.pop('optional', None)
+                kwargs.pop('sparse', None)  # <-- Buang parameter sparse yang bikin error sekarang
                 super().__init__(*args, **kwargs)
+                
             @classmethod
             def from_config(cls, config):
                 config.pop('batch_shape', None)
                 config.pop('optional', None)
+                config.pop('sparse', None)  # <-- Buang juga di bagian konfigurasi serialisasinya
                 return cls(**config)
 
-        # Muat model di dalam scope custom object agar menggunakan resolver buatan kita
+        # Muat model di dalam scope custom object agar menggunakan filter buatan kita
         with custom_object_scope({'InputLayer': SafeInputLayer}):
             model = load_model(model_path, compile=False)
 
