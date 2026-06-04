@@ -111,54 +111,14 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) dengan aman lintas versi Keras."""
-    import h5py
-    import json
+    """Memuat model Deep Learning (LSTM) secara aman menggunakan native Keras loader."""
+    import pickle
     
     try:
         model_path = os.path.join(MODEL_DIR, "dl_model.h5")
         
-        def clean_quantization_config(config):
-            if isinstance(config, dict):
-                config.pop('quantization_config', None)
-                for key, value in config.items():
-                    clean_quantization_config(value)
-            elif isinstance(config, list):
-                for item in config:
-                    clean_quantization_config(item)
-            return config
-
-        with h5py.File(model_path, 'r') as f:
-            model_config_raw = f.attrs.get('model_config')
-            if model_config_raw is None:
-                raise ValueError("Format file .h5 tidak mengenali metadata model_config.")
-            
-            if isinstance(model_config_raw, bytes):
-                model_config_raw = model_config_raw.decode('utf-8')
-                
-            model_config = json.loads(model_config_raw)
-            cleaned_config = clean_quantization_config(model_config)
-            
-            # --- PERBAIKAN DI SINI ---
-            # Menggunakan keras.layers.deserialize atau tf.keras.models.model_from_config secara aman
-            try:
-                model = tf.keras.models.model_from_config(cleaned_config)
-            except AttributeError:
-                import keras
-                # Cadangan jika environment mendeteksi struktur Keras 3 langsung
-                model = keras.config.deserialize(cleaned_config)
-            # -------------------------
-            
-            for layer in model.layers:
-                layer_name = layer.name
-                if f"model_weights/{layer_name}" in f:
-                    weight_names = f[f"model_weights/{layer_name}"].attrs.get('weight_names')
-                    weights = []
-                    for weight_name in weight_names:
-                        if isinstance(weight_name, bytes):
-                            weight_name = weight_name.decode('utf-8')
-                        weights.append(f[f"model_weights/{layer_name}/{weight_name}"][()])
-                    layer.set_weights(weights)
+        # Menggunakan native loader yang otomatis melakukan bypass/handling pada versi config Keras
+        model = tf.keras.models.load_model(model_path, compile=False)
 
         with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
             tok = pickle.load(f)
@@ -167,8 +127,7 @@ def load_dl():
             
         return model, tok, cfg, None
     except Exception as e:
-        return None, None, None, str(e)
-    
+        return None, None, None, str(e)    
     
 # =================================
 # PREDICTION FUNCTIONS
