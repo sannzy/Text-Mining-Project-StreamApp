@@ -8,24 +8,33 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & STYLING (Professional Blue - FIXED)
+# PAGE CONFIG & STYLING (Aman dari Bug Streamlit)
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica - Integrated System", 
     layout="centered"
 )
 
-# Custom CSS yang sudah diperbaiki agar tidak crash di Streamlit Cloud
-st.markdown("""
+# Menggunakan komponen HTML murni lewat st.components.v1 untuk menyuntikkan gaya tanpa memicu bug st.markdown
+import streamlit.components.v1 as components
+
+components.html("""
     <style>
-    /* Background utama */
-    .stApp {
-        background-color: #F0F4F8;
-    }
+    /* Menargetkan elemen induk Streamlit secara paksa lewat inject script */
+    parent.document.body.style.backgroundColor = "#F0F4F8";
     
-    /* Tombol Proses Biru */
+    .stApp {
+        background-color: #F0F4F8 !important;
+    }
+    </style>
+""", height=0)
+
+# CSS Styling yang kita bungkus ke fungsi agar tidak dieksekusi langsung di top-level script
+def get_custom_styles():
+    return """
+    <style>
     .stButton>button {
-        width: 100vw; /* Mengganti % menjadi vw agar aman dari error string formatting */
+        width: 100%;
         background-color: #1E40AF;
         color: white;
         border-radius: 4px;
@@ -36,11 +45,8 @@ st.markdown("""
     }
     .stButton>button:hover {
         background-color: #1E3A8A;
-        border: none;
         color: white;
     }
-
-    /* Container Hasil */
     .result-box {
         padding: 20px;
         border-radius: 5px;
@@ -49,42 +55,16 @@ st.markdown("""
         background-color: #FFFFFF;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    
-    .positive-text {
-        color: #1E40AF;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    
-    .negative-text {
-        color: #B91C1C;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #1E293B;
-    }
-    section[data-testid="stSidebar"] * {
-        color: #F8FAFC !important;
-    }
-
-    /* Footer */
+    .positive-text { color: #1E40AF; font-weight: bold; font-size: 1.2rem; }
+    .negative-text { color: #B91C1C; font-weight: bold; font-size: 1.2rem; }
     .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100vw; /* Mengganti % menjadi vw agar aman dari error string formatting */
-        background-color: #FFFFFF;
-        color: #475569;
-        text-align: center;
-        padding: 10px;
-        font-size: 12px;
-        border-top: 1px solid #E2E8F0;
+        position: fixed; left: 0; bottom: 0; width: 100%;
+        background-color: #FFFFFF; color: #475569; text-align: center;
+        padding: 10px; font-size: 12px; border-top: 1px solid #E2E8F0;
     }
     </style>
-""", unsafe_allowed_html=True)
+    """
+
 
 # =================================
 # LOAD ASSETS & PATCHES (Anti Bug Keras 3)
@@ -109,7 +89,6 @@ def load_dl():
         
         # --- GLOBAL PATCH UNTUK KORUP CONFIG KERAS 3 ---
         def clean_quantization_config(config):
-            """Menghapus parameter quantization_config di semua layer secara rekursif."""
             if isinstance(config, dict):
                 config.pop('quantization_config', None)
                 for key, value in config.items():
@@ -119,7 +98,6 @@ def load_dl():
                     clean_quantization_config(item)
             return config
 
-        # Buka file .h5 secara manual untuk mengekstrak dan memperbaiki arsitektur model
         with h5py.File(model_path, 'r') as f:
             model_config_raw = f.attrs.get('model_config')
             if model_config_raw is None:
@@ -157,7 +135,6 @@ def load_dl():
 # PREDICTION FUNCTIONS
 # =================================
 def predict_ml(text):
-    """Prediksi menggunakan model Machine Learning."""
     model, tfidf = load_ml()
     vec = tfidf.transform([preprocess(text)])
     proba = float(model.predict_proba(vec)[0][1])
@@ -166,11 +143,9 @@ def predict_ml(text):
 
 
 def predict_dl(text):
-    """Prediksi menggunakan model Deep Learning (LSTM) dengan deteksi error internal."""
     from tensorflow.keras.preprocessing.sequence import pad_sequences
     
     model, tok, cfg, error_msg = load_dl()
-    
     if error_msg:
         raise RuntimeError(error_msg)
         
@@ -189,13 +164,10 @@ def predict_dl(text):
 # SIDEBAR (Identitas Kamu)
 # =================================
 with st.sidebar:
-    st.markdown("### Informasi Proyek")
-    st.markdown("""
-    **Pengembang:** Sanly - 2702271474  
-    
-    **Sistem Informasi:** Proyek Akhir Text Mining  
-    Dual Model Option System  
-    """)
+    st.write("### Informasi Proyek")
+    st.write("**Pengembang:** Sanly - 2702271474")
+    st.write("**Sistem Informasi:** Proyek Akhir Text Mining")
+    st.write("Dual Model Option System")
     st.divider()
     st.caption("Deep Learning Project - 2026")
 
@@ -203,25 +175,25 @@ with st.sidebar:
 # =================================
 # MAIN CONTENT AREA
 # =================================
+# Menyuntikkan style tombol dan box secara aman di area konten
+st.html(get_custom_styles())
+
 st.markdown("<h2 style='text-align: center; color: #1E40AF;'>Analisis Sentimen Teks</h2>", unsafe_allowed_html=True)
 st.markdown("<p style='text-align: center; color: #475569;'>Sistem klasifikasi teks otomatis berbasis Machine Learning dan Deep Learning.</p>", unsafe_allowed_html=True)
 st.write("")
 
-# Input Pilihan Model
 model_choice = st.radio(
     "Pilih Model Analisis:",
     ["Machine Learning (Logistic Regression)", "Deep Learning (LSTM)"],
     horizontal=False,
 )
 
-# Input Teks dari Pengguna
 text_input = st.text_area(
     "Masukkan teks ulasan yang ingin dianalisis:", 
     height=140,
     placeholder="Tulis ulasan Anda di sini tanpa simbol khusus..."
 )
 
-# Tombol Aksi
 if st.button("Proses Analisis"):
     if not text_input.strip():
         st.info("Pesan: Teks tidak boleh kosong. Silakan masukkan teks terlebih dahulu.")
