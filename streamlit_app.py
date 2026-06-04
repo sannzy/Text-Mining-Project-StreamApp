@@ -11,37 +11,19 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & PROFESSIONAL BLUE THEME
+# PAGE CONFIG & CLEAN BLUE THEME
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica", 
     layout="centered"
 )
 
-# Kustomisasi UI agar bersih, minimalis, dan serba biru murni via st.html (Aman dari Bug)
+# Kustomisasi UI minimalis: Mengubah tombol & bullet tanpa merusak warna teks aplikasi
 st.html("""
     <style>
-    /* Mengatur latar belakang aplikasi tetap bersih */
+    /* Mengunci latar belakang aplikasi tetap terang */
     .stApp {
         background-color: #F8FAFC !important;
-    }
-    
-    /* MENGHILANGKAN HIGHLIGHT SELEKSI PADA RADIO BUTTON */
-    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p span {
-        background-color: transparent !important;
-        color: #1E293B !important;
-    }
-    ::selection {
-        background: transparent !important;
-    }
-    
-    /* CUSTOM BULLET RADIO BUTTON (BIRU MURNI) */
-    div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
-        border-color: #1E40AF !important;
-    }
-    div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"]:checked + div div {
-        background-color: #1E40AF !important;
-        background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
     }
     
     /* CUSTOM TOMBOL PROSES ANALISIS (BIRU MODERN & PENUH) */
@@ -63,24 +45,20 @@ st.html("""
         border: none !important;
         color: white !important;
     }
-    div.stButton > button:active {
-        background-color: #1E3A8A !important;
-        border: none !important;
+    
+    /* SUNTIKAN WARNA BIRU UNTUK BULLET RADIO BUTTON */
+    div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
+        border-color: #1E40AF !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"]:checked + div div {
+        background-color: #1E40AF !important;
+        background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
     }
     
-    /* SIDEBAR STYLING - RAPI & ELEGAN */
+    /* SIDEBAR STYLING - RAPI & KONTRAS */
     section[data-testid="stSidebar"] {
         background-color: #0F172A !important;
     }
-    
-    /* Memaksa teks judul & bawaan di sidebar berwarna kontras dan rapi */
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3, 
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] span {
-        color: #F8FAFC !important;
-    }
-    
     section[data-testid="stSidebar"] .sidebar-title {
         color: #94A3B8 !important;
         font-size: 0.75rem !important;
@@ -96,7 +74,7 @@ st.html("""
         margin-bottom: 12px !important;
     }
     
-    /* Layout kontainer utama */
+    /* Jaga jarak atas */
     .block-container {
         padding-top: 3rem;
     }
@@ -198,12 +176,11 @@ def predict_dl(text):
 
 
 # =================================
-# SIDEBAR (Menggunakan Elemen Murni - ANTI ERROR)
+# SIDEBAR
 # =================================
 with st.sidebar:
     st.subheader("Dashboard Proyek")
     
-    # Memakai komponen st.html murni untuk render teks rapi (Aman dari sensor st.markdown)
     st.html("""
         <div class="sidebar-title">Nama Pengembang</div>
         <div class="sidebar-value">Sanly</div>
@@ -259,7 +236,7 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Desain Box Hasil Murni Lewat st.html
+                # Desain Box Hasil Minimalis Serba Biru
                 if label == "Positif":
                     st.html(f"""
                         <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
@@ -289,6 +266,6 @@ if st.button("Proses Analisis", type="primary"):
                 st.error("Terjadi kesalahan internal pada pemrosesan model:")
                 st.code(str(e), language="text")
 
-# Footer Minimalis
+# Footer
 st.divider()
 st.caption("Created by Sanly - 2702271474")
