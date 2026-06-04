@@ -1,11 +1,12 @@
 import streamlit as st
 import pickle
 import os
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from preprocessing import preprocess
 
-# Import fungsi preprocessing dari file streamlit_app.py
-from streamlit_app import preprocess
+# Konstanta
+MODEL_DIR = "models"
 
 # =================================
 # PAGE CONFIG & STYLING
@@ -15,15 +16,9 @@ st.set_page_config(
     layout="centered"
 )
 
-# Custom CSS untuk tema Biru Profesional dan menghapus emoticons
 st.markdown("""
     <style>
-    /* Background utama */
-    .stApp {
-        background-color: #F0F4F8;
-    }
-    
-    /* Tombol Prediksi Biru */
+    .stApp { background-color: #F0F4F8; }
     .stButton>button {
         width: 100%;
         background-color: #1E40AF;
@@ -34,54 +29,20 @@ st.markdown("""
         font-weight: 600;
         transition: 0.3s;
     }
-    .stButton>button:hover {
-        background-color: #1E3A8A;
-        border: none;
-        color: white;
-    }
-
-    /* Container Hasil */
+    .stButton>button:hover { background-color: #1E3A8A; color: white; }
     .result-box {
-        padding: 20px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        border-left: 5px solid #1E40AF;
-        background-color: #FFFFFF;
+        padding: 20px; border-radius: 5px; margin-bottom: 20px;
+        border-left: 5px solid #1E40AF; background-color: #FFFFFF;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    
-    .positive-text {
-        color: #1E40AF;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    
-    .negative-text {
-        color: #B91C1C;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #1E293B;
-    }
-    section[data-testid="stSidebar"] * {
-        color: #F8FAFC !important;
-    }
-
-    /* Footer */
+    .positive-text { color: #1E40AF; font-weight: bold; font-size: 1.2rem; }
+    .negative-text { color: #B91C1C; font-weight: bold; font-size: 1.2rem; }
+    section[data-testid="stSidebar"] { background-color: #1E293B; }
+    section[data-testid="stSidebar"] * { color: #F8FAFC !important; }
     .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: #FFFFFF;
-        color: #475569;
-        text-align: center;
-        padding: 10px;
-        font-size: 12px;
-        border-top: 1px solid #E2E8F0;
+        position: fixed; left: 0; bottom: 0; width: 100%;
+        background-color: #FFFFFF; color: #475569; text-align: center;
+        padding: 10px; font-size: 12px; border-top: 1px solid #E2E8F0;
     }
     </style>
 """, unsafe_allowed_html=True)
@@ -91,25 +52,19 @@ st.markdown("""
 # =================================
 @st.cache_resource
 def load_assets():
-    model_path = os.path.join("models", "dl_model.h5")
-    tokenizer_path = os.path.join("models", "tokenizer.pkl")
-    config_path = os.path.join("models", "config.pkl")
-    
-    model = load_model(model_path)
-    
-    with open(tokenizer_path, "rb") as f:
+    # Menggunakan pemanggilan aman Keras bawaan
+    model_path = os.path.join(MODEL_DIR, "dl_model.h5")
+    with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
         tokenizer = pickle.load(f)
-        
-    with open(config_path, "rb") as f:
+    with open(os.path.join(MODEL_DIR, "config.pkl"), "rb") as f:
         config = pickle.load(f)
-        max_len = config["MAX_LEN"]
-        
-    return model, tokenizer, max_len
+    model = tf.keras.models.load_model(model_path, compile=False)
+    return model, tokenizer, config["MAX_LEN"]
 
 try:
     model, tokenizer, max_len = load_assets()
 except Exception as e:
-    st.error(f"Sistem gagal memuat komponen model. Pastikan train.py sudah dijalankan.")
+    st.error("Sistem gagal memuat komponen model standar.")
     st.stop()
 
 # =================================
@@ -118,13 +73,8 @@ except Exception as e:
 with st.sidebar:
     st.markdown("### Informasi Proyek")
     st.markdown("""
-    **Pengembang**
-    Sanly - 2702271474
-    
-    **Arsitektur Model**
-    Long Short-Term Memory (LSTM)
-    Embedding Layer
-    Dense Classifier
+    **Pengembang:** Sanly - 2702271474  
+    **Arsitektur Model:** LSTM Network Dedicated
     """)
     st.divider()
     st.caption("Deep Learning Project - 2026")
@@ -132,40 +82,27 @@ with st.sidebar:
 # =================================
 # MAIN CONTENT AREA
 # =================================
-st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Analisis Sentimen Teks</h2>", unsafe_allowed_html=True)
+st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Analisis Sentimen Teks (LSTM)</h2>", unsafe_allowed_html=True)
 st.markdown("<p style='text-align: center; color: #475569;'>Sistem klasifikasi teks otomatis menggunakan arsitektur neural network LSTM.</p>", unsafe_allowed_html=True)
 st.write("")
 
-# Input teks area
-text_input = st.text_area(
-    "Masukkan Teks Ulasan:",
-    height=150,
-    placeholder="Tulis ulasan Anda di sini tanpa simbol khusus..."
-)
+text_input = st.text_area("Masukkan Teks Ulasan:", height=150, placeholder="Tulis ulasan Anda di sini...")
 
-# Tombol Prediksi
 if st.button("Proses Analisis"):
     if not text_input.strip():
         st.info("Pesan: Masukkan teks terlebih dahulu.")
     else:
         with st.spinner("Menganalisis data..."):
-            # 1. Preprocessing
             cleaned_text = preprocess(text_input)
-            
             if not cleaned_text.strip():
                 st.warning("Pesan: Teks tidak valid untuk dianalisis.")
             else:
-                # 2. Tokenisasi dan Padding
                 seq = tokenizer.texts_to_sequences([cleaned_text])
                 padded = pad_sequences(seq, maxlen=max_len, padding='post', truncating='post')
+                score = float(model.predict(padded, verbose=0)[0][0])
                 
-                # 3. Prediksi
-                score = model.predict(padded)[0][0]
-                
-                # 4. Tampilkan Hasil (Custom HTML untuk menghindari emotikon bawaan Streamlit)
                 st.write("---")
                 st.markdown("#### Hasil Klasifikasi")
-                
                 confidence = score if score >= 0.5 else (1 - score)
                 
                 if score >= 0.5:
@@ -182,8 +119,6 @@ if st.button("Proses Analisis"):
                         <p style="margin:0; font-size: 0.9rem; color: #64748B;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                     </div>
                 """, unsafe_allowed_html=True)
-                
                 st.metric(label="Tingkat Keyakinan (Confidence)", value=f"{confidence * 100:.2f}%")
 
-# Footer
 st.markdown('<div class="footer">Created by Sanly - 2702271474</div>', unsafe_allowed_html=True)
