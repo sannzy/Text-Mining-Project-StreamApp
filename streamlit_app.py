@@ -18,7 +18,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Kustomisasi UI agar bersih, minimalis, dan serba biru murni
+# Kustomisasi UI agar bersih, minimalis, dan serba biru murni via st.html (Aman dari Bug)
 st.html("""
     <style>
     /* Mengatur latar belakang aplikasi tetap bersih */
@@ -72,6 +72,15 @@ st.html("""
     section[data-testid="stSidebar"] {
         background-color: #0F172A !important;
     }
+    
+    /* Memaksa teks judul & bawaan di sidebar berwarna kontras dan rapi */
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3, 
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span {
+        color: #F8FAFC !important;
+    }
+    
     section[data-testid="stSidebar"] .sidebar-title {
         color: #94A3B8 !important;
         font-size: 0.75rem !important;
@@ -189,12 +198,12 @@ def predict_dl(text):
 
 
 # =================================
-# SIDEBAR (Struktur Minimalis & Rapi)
+# SIDEBAR (Menggunakan Elemen Murni - ANTI ERROR)
 # =================================
 with st.sidebar:
-    st.markdown("<h3 style='color: #F8FAFC; margin-bottom: 20px;'>Dashboard Proyek</h3>", unsafe_allowed_html=True)
+    st.subheader("Dashboard Proyek")
     
-    # Menggunakan kelas CSS kustom untuk memisahkan Label dan Nilai Data secara terstruktur
+    # Memakai komponen st.html murni untuk render teks rapi (Aman dari sensor st.markdown)
     st.html("""
         <div class="sidebar-title">Nama Pengembang</div>
         <div class="sidebar-value">Sanly</div>
@@ -233,7 +242,6 @@ text_input = st.text_area(
 
 st.write("")
 
-# Tombol "Proses Analisis" otomatis diubah ke Biru Elegan oleh CSS di atas
 if st.button("Proses Analisis", type="primary"):
     if not text_input.strip():
         st.info("Pesan: Teks input kosong. Silakan masukkan ulasan teks terlebih dahulu.")
@@ -251,7 +259,7 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Desain Box Hasil Minimalis Serba Biru murni
+                # Desain Box Hasil Murni Lewat st.html
                 if label == "Positif":
                     st.html(f"""
                         <div style="padding: 18px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
@@ -269,7 +277,7 @@ if st.button("Proses Analisis", type="primary"):
                         </div>
                     """)
 
-                # Indikator Nilai Kepercayaan (Confidence)
+                # Indikator Nilai Kepercayaan
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.metric(label="Tingkat Keyakinan", value=f"{conf * 100:.1f}%")
