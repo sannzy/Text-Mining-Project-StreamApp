@@ -2,24 +2,39 @@ import os
 import pickle
 import joblib
 import streamlit as st
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from preprocessing import preprocess
 
 # Konstanta
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG
+# PAGE CONFIG & CUSTOM BLUE THEME
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica - Integrated System", 
     layout="centered"
 )
 
-# Menghilangkan padding atas bawaan Streamlit agar layout lebih rapi
+# Kustomisasi CSS untuk mengubah warna border hasil dan tombol bullet menjadi Biru
 st.html("""
     <style>
     .block-container {
         padding-top: 2rem;
+    }
+    
+    /* Mengubah warna teks dan lingkaran radio button (bullet) yang aktif menjadi biru */
+    div[data-testid="stRadio"] label[data-baseweb="radio"] div div {
+        border-color: #1E40AF !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"]:checked + div div {
+        background-color: #1E40AF !important;
+        background-image: radial-gradient(circle, #1E40AF 0%, #1E40AF 40%, transparent 50%) !important;
+    }
+    div[data-testid="stRadio"] label p {
+        color: #1E293B !important;
     }
     </style>
 """)
@@ -38,7 +53,6 @@ def load_ml():
 @st.cache_resource
 def load_dl():
     """Memuat model Deep Learning (LSTM) dengan membersihkan semua bug Keras 3 secara global."""
-    import tensorflow as tf
     import h5py
     import json
     
@@ -101,25 +115,29 @@ def predict_ml(text):
 
 
 def predict_dl(text):
-    from tensorflow.keras.preprocessing.sequence import pad_sequences
-    
+    """Prediksi menggunakan model Deep Learning (LSTM) dengan perbaikan global import."""
     model, tok, cfg, error_msg = load_dl()
     if error_msg:
         raise RuntimeError(error_msg)
         
-    seq = pad_sequences(
-        tok.texts_to_sequences([preprocess(text)]),
-        maxlen=cfg["MAX_LEN"], 
+    cleaned = preprocess(text)
+    seq = tok.texts_to_sequences([cleaned])
+    
+    padded = pad_sequences(
+        seq,
+        maxlen=int(cfg["MAX_LEN"]), 
         padding="post", 
         truncating="post"
     )
-    proba = float(model.predict(seq, verbose=0)[0][0])
+    
+    raw_prediction = model.predict(padded, verbose=0)
+    proba = float(raw_prediction[0][0])
     label = "Positif" if proba >= 0.5 else "Negatif"
     return label, proba
 
 
 # =================================
-# SIDEBAR (Identitas Tanpa Markdown HTML)
+# SIDEBAR (Identitas Tanpa HTML)
 # =================================
 with st.sidebar:
     st.subheader("Informasi Proyek")
@@ -133,7 +151,6 @@ with st.sidebar:
 # =================================
 # MAIN CONTENT AREA
 # =================================
-# Menggunakan fungsi bawaan murni (Aman dari bug st.markdown HTML)
 st.header("Analisis Sentimen Teks", divider="blue")
 st.caption("Sistem klasifikasi teks otomatis berbasis Machine Learning dan Deep Learning LSTM.")
 st.write("")
@@ -167,7 +184,7 @@ if st.button("Proses Analisis", type="primary"):
                 st.write("---")
                 st.subheader("Hasil Klasifikasi")
                 
-                # Menggunakan st.html khusus untuk cetak kotak hasil agar terisolasi dari st.metric
+                # Desain kotak hasil baru: Positif menggunakan biru tua, Negatif menggunakan biru muda/cyan agar serba biru
                 if label == "Positif":
                     st.html(f"""
                         <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #1E40AF; background-color: #E0F2FE;">
@@ -178,10 +195,10 @@ if st.button("Proses Analisis", type="primary"):
                     """)
                 else:
                     st.html(f"""
-                        <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #B91C1C; background-color: #FEE2E2;">
-                            <p style="margin:0; font-size: 0.9rem; color: #991B1B;">Prediksi:</p>
-                            <p style="color: #B91C1C; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN NEGATIF</p>
-                            <p style="margin:0; font-size: 0.9rem; color: #991B1B;">Teks Bersih: <i>"{cleaned_text}"</i></p>
+                        <div style="padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #06B6D4; background-color: #ECFEFF;">
+                            <p style="margin:0; font-size: 0.9rem; color: #0891B2;">Prediksi:</p>
+                            <p style="color: #0E7490; font-weight: bold; font-size: 1.2rem; margin: 5px 0;">SENTIMEN NEGATIF</p>
+                            <p style="margin:0; font-size: 0.9rem; color: #0891B2;">Teks Bersih: <i>"{cleaned_text}"</i></p>
                         </div>
                     """)
 
@@ -197,6 +214,6 @@ if st.button("Proses Analisis", type="primary"):
                 st.error("Terjadi kesalahan internal pada pemrosesan model:")
                 st.code(str(e), language="text")
 
-# Footer menggunakan teks murni
+# Footer
 st.divider()
 st.caption("Created by Sanly - 2702271474")
