@@ -8,14 +8,14 @@ from preprocessing import preprocess
 MODEL_DIR = "models"
 
 # =================================
-# PAGE CONFIG & STYLING (Professional Blue)
+# PAGE CONFIG & STYLING (Professional Blue - FIXED)
 # =================================
 st.set_page_config(
     page_title="SentimenAnalytica - Integrated System", 
     layout="centered"
 )
 
-# Custom CSS untuk tema biru profesional dan menghilangkan emoticons bawaan
+# Custom CSS yang sudah diperbaiki agar tidak crash di Streamlit Cloud
 st.markdown("""
     <style>
     /* Background utama */
@@ -25,7 +25,7 @@ st.markdown("""
     
     /* Tombol Proses Biru */
     .stButton>button {
-        width: 100%;
+        width: 100vw; /* Mengganti % menjadi vw agar aman dari error string formatting */
         background-color: #1E40AF;
         color: white;
         border-radius: 4px;
@@ -75,7 +75,7 @@ st.markdown("""
         position: fixed;
         left: 0;
         bottom: 0;
-        width: 100%;
+        width: 100vw; /* Mengganti % menjadi vw agar aman dari error string formatting */
         background-color: #FFFFFF;
         color: #475569;
         text-align: center;
@@ -85,7 +85,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allowed_html=True)
-
 
 # =================================
 # LOAD ASSETS & PATCHES (Anti Bug Keras 3)
