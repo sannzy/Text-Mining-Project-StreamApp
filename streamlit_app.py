@@ -111,24 +111,53 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) secara aman menggunakan native Keras loader."""
+    """Memuat model Deep Learning (LSTM) dengan merakit ulang arsitektur 
+    secara manual untuk menghindari bug deserialization Keras 2 vs Keras 3.
+    """
     import pickle
+    import h5py
     
     try:
         model_path = os.path.join(MODEL_DIR, "dl_model.h5")
         
-        # Menggunakan native loader yang otomatis melakukan bypass/handling pada versi config Keras
-        model = tf.keras.models.load_model(model_path, compile=False)
-
-        with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
-            tok = pickle.load(f)
+        # 1. Buka file acuan config untuk dapet dimensi embedding dan unit
         with open(os.path.join(MODEL_DIR, "config.pkl"), "rb") as f:
             cfg = pickle.load(f)
+        with open(os.path.join(MODEL_DIR, "tokenizer.pkl"), "rb") as f:
+            tok = pickle.load(f)
             
+        max_len = int(cfg["MAX_LEN"])
+        vocab_size = len(tok.word_index) + 1  # Sesuaikan dengan vocabulary tokenizer
+        
+        # 2. Rakit ulang strukturnya secara manual (Sesuaikan dengan arsitektur aslimu)
+        # Di bawah ini adalah susunan standar Keras 2/3 universal
+        model = tf.keras.Sequential([
+            tf.keras.layers.Input(shape=(max_len,), name="input_layer"),
+            tf.keras.layers.Embedding(input_dim=vocab_size, output_dim=128, name="embedding"),
+            tf.keras.layers.LSTM(units=64, name="lstm"),
+            tf.keras.layers.Dense(units=1, activation="sigmoid", name="dense")
+        ])
+        
+        # 3. Inject/Suntik bobot matriks hasil training langsung dari file .h5
+        with h5py.File(model_path, 'r') as f:
+            # Iterasi setiap layer yang kita buat secara manual tadi
+            for layer in model.layers:
+                layer_name = layer.name
+                # Cari path bobot di dalam struktur file .h5
+                if f"model_weights/{layer_name}" in f:
+                    weight_names = f[f"model_weights/{layer_name}"].attrs.get('weight_names')
+                    weights = []
+                    for weight_name in weight_names:
+                        if isinstance(weight_name, bytes):
+                            weight_name = weight_name.decode('utf-8')
+                        weights.append(f[f"model_weights/{layer_name}/{weight_name}"][()])
+                    # Pasang bobot ke layer terkait
+                    layer.set_weights(weights)
+                    
         return model, tok, cfg, None
     except Exception as e:
-        return None, None, None, str(e)    
-    
+        return None, None, None, str(e)
+        
 # =================================
 # PREDICTION FUNCTIONS
 # =================================
