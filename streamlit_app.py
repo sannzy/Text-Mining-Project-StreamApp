@@ -110,9 +110,9 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) secara aman dengan membypass rewelnya 
+    """Memuat model Deep Learning (LSTM) secara aman dengan menyapu bersih 
 
-    argumen InputLayer (batch_shape, optional, sparse) pada perbedaan versi Keras.
+    semua keyword argument peninggalan Keras 2 yang bikin crash di Keras 3.
     """
     import pickle
     from tensorflow.keras.models import load_model
@@ -121,23 +121,26 @@ def load_dl():
     try:
         model_path = os.path.join(MODEL_DIR, "dl_model.h5")
         
-        # Membuat 'InputLayer' kustom sementara waktu saat loading
-        # Agar semua keyword argument lama yang bikin crash di Keras 3 dibuang otomatis
+        # Membuat 'InputLayer' kustom yang kebal dari segala argumen lama
         class SafeInputLayer(tf.keras.layers.Layer):
             def __init__(self, *args, **kwargs):
-                kwargs.pop('batch_shape', None)
-                kwargs.pop('optional', None)
-                kwargs.pop('sparse', None)  # <-- Buang parameter sparse yang bikin error sekarang
-                super().__init__(*args, **kwargs)
+                # Hanya sisipkan parameter universal yang aman untuk Keras 3
+                safe_kwargs = {}
+                for key in ['name', 'dtype']:
+                    if key in kwargs:
+                        safe_kwargs[key] = kwargs[key]
+                super().__init__(*args, **safe_kwargs)
                 
             @classmethod
             def from_config(cls, config):
-                config.pop('batch_shape', None)
-                config.pop('optional', None)
-                config.pop('sparse', None)  # <-- Buang juga di bagian konfigurasi serialisasinya
-                return cls(**config)
+                # Bersihkan juga isi dictionary config sebelum dilempar ke instansiasi
+                safe_config = {}
+                for key in ['name', 'dtype']:
+                    if key in config:
+                        safe_config[key] = config[key]
+                return cls(**safe_config)
 
-        # Muat model di dalam scope custom object agar menggunakan filter buatan kita
+        # Muat model di dalam scope custom object agar menggunakan filter sapu bersih kita
         with custom_object_scope({'InputLayer': SafeInputLayer}):
             model = load_model(model_path, compile=False)
 
