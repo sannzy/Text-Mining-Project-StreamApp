@@ -3,5 +3,5 @@ numpy
 scikit-learn
 joblib
 Sastrawi
-tensorflow-cpu
+tensorflow==2.15.0
 streamlit
