@@ -111,7 +111,7 @@ def load_ml():
 
 @st.cache_resource
 def load_dl():
-    """Memuat model Deep Learning (LSTM) dengan aman."""
+    """Memuat model Deep Learning (LSTM) dengan aman lintas versi Keras."""
     import h5py
     import json
     
@@ -138,7 +138,16 @@ def load_dl():
                 
             model_config = json.loads(model_config_raw)
             cleaned_config = clean_quantization_config(model_config)
-            model = tf.keras.models.model_from_config(cleaned_config)
+            
+            # --- PERBAIKAN DI SINI ---
+            # Menggunakan keras.layers.deserialize atau tf.keras.models.model_from_config secara aman
+            try:
+                model = tf.keras.models.model_from_config(cleaned_config)
+            except AttributeError:
+                import keras
+                # Cadangan jika environment mendeteksi struktur Keras 3 langsung
+                model = keras.config.deserialize(cleaned_config)
+            # -------------------------
             
             for layer in model.layers:
                 layer_name = layer.name
@@ -159,8 +168,8 @@ def load_dl():
         return model, tok, cfg, None
     except Exception as e:
         return None, None, None, str(e)
-
-
+    
+    
 # =================================
 # PREDICTION FUNCTIONS
 # =================================
